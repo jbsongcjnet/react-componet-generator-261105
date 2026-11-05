@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
+import { usePersistentState } from './hooks/usePersistentState';
+import { useEncryptedState } from './hooks/useEncryptedState';
+import { addToHistory, reviveHistory } from './utils/promptHistory';
 import type { Provider } from './types';
 import './App.css';
 
@@ -10,10 +13,20 @@ const PROVIDER_CONFIG = {
   google: { label: 'Google', placeholder: 'AIza...' },
 } as const;
 
+function reviveProvider(parsed: unknown): Provider {
+  if (typeof parsed === 'string' && parsed in PROVIDER_CONFIG) return parsed as Provider;
+  throw new Error('invalid provider');
+}
+
 function App() {
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useEncryptedState('rcg:apiKey');
+  const [history, setHistory] = usePersistentState<string[]>('rcg:history', [], reviveHistory);
   const [showKey, setShowKey] = useState(false);
-  const [provider, setProvider] = useState<Provider>('google');
+  const [provider, setProvider] = usePersistentState<Provider>(
+    'rcg:provider',
+    'google',
+    reviveProvider,
+  );
   const [envKeys, setEnvKeys] = useState<Record<Provider, boolean>>({
     anthropic: false,
     google: false,
@@ -35,6 +48,7 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
+    setHistory((prev) => addToHistory(prev, prompt));
     generate(prompt, apiKey || undefined, provider);
   };
 
@@ -71,7 +85,7 @@ function App() {
               <span>새 프롬프트</span>
             </div>
             <div className="window-body">
-              <PromptInput onGenerate={handleGenerate} isLoading={isLoading} />
+              <PromptInput onGenerate={handleGenerate} isLoading={isLoading} history={history} />
             </div>
           </section>
 

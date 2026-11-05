@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { usePersistentState } from './usePersistentState';
 import type { GeneratedComponent, Provider } from '../types';
 
 interface UseComponentGeneratorReturn {
@@ -10,8 +11,27 @@ interface UseComponentGeneratorReturn {
   clearAll: () => void;
 }
 
+export const MAX_COMPONENTS = 50;
+
+function reviveComponents(parsed: unknown): GeneratedComponent[] {
+  if (!Array.isArray(parsed)) return [];
+  return parsed.flatMap((c): GeneratedComponent[] => {
+    if (!c || typeof c !== 'object') return [];
+    const { id, prompt, code, createdAt } = c as Record<string, unknown>;
+    if (typeof id !== 'string' || typeof prompt !== 'string' || typeof code !== 'string') return [];
+    if (typeof createdAt !== 'string') return [];
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) return [];
+    return [{ id, prompt, code, createdAt: date }];
+  });
+}
+
 export function useComponentGenerator(): UseComponentGeneratorReturn {
-  const [components, setComponents] = useState<GeneratedComponent[]>([]);
+  const [components, setComponents] = usePersistentState<GeneratedComponent[]>(
+    'rcg:components',
+    [],
+    reviveComponents,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,22 +59,22 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
         createdAt: new Date(),
       };
 
-      setComponents((prev) => [newComponent, ...prev]);
+      setComponents((prev) => [newComponent, ...prev].slice(0, MAX_COMPONENTS));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setComponents]);
 
   const removeComponent = useCallback((id: string) => {
     setComponents((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  }, [setComponents]);
 
   const clearAll = useCallback(() => {
     setComponents([]);
-  }, []);
+  }, [setComponents]);
 
   return { components, isLoading, error, generate, removeComponent, clearAll };
 }

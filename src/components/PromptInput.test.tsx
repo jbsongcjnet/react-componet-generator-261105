@@ -48,4 +48,12 @@ describe('PromptInput', () => {
     render(<PromptInput onGenerate={vi.fn()} isLoading={true} />);
     expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled();
   });
+
+  it('히스토리 항목을 보여주고 클릭하면 입력창에 채운다', async () => {
+    const user = userEvent.setup();
+    render(<PromptInput onGenerate={vi.fn()} isLoading={false} history={['이전 프롬프트']} />);
+
+    await user.click(screen.getByRole('button', { name: '이전 프롬프트' }));
+    expect(screen.getByRole('textbox')).toHaveValue('이전 프롬프트');
+  });
 });
