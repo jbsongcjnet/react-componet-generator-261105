@@ -722,3 +722,21 @@
     background-size: 60% 100%;
   }
 }
+
+.prompt-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.prompt-error {
+  color: var(--coral);
+  font-weight: 600;
+}
+
+.prompt-counter {
+  font-family: var(--mono);
+  color: var(--ink);
+}
