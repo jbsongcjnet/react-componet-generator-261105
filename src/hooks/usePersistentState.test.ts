@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { usePersistentState } from './usePersistentState';
 
 describe('usePersistentState', () => {
   beforeEach(() => localStorage.clear());
+  afterEach(() => vi.restoreAllMocks());
 
   it('저장된 값이 없으면 초기값을 반환한다', () => {
     const { result } = renderHook(() => usePersistentState('k', 'init'));
@@ -26,5 +27,14 @@ describe('usePersistentState', () => {
     localStorage.setItem('k', '{broken');
     const { result } = renderHook(() => usePersistentState('k', 'init'));
     expect(result.current[0]).toBe('init');
+  });
+
+  it('localStorage 쓰기가 실패해도 예외 없이 상태는 유지된다', () => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    const { result } = renderHook(() => usePersistentState('k', 'init'));
+    act(() => result.current[1]('changed'));
+    expect(result.current[0]).toBe('changed');
   });
 });

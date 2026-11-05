@@ -11,9 +11,19 @@ interface UseComponentGeneratorReturn {
   clearAll: () => void;
 }
 
+export const MAX_COMPONENTS = 50;
+
 function reviveComponents(parsed: unknown): GeneratedComponent[] {
   if (!Array.isArray(parsed)) return [];
-  return parsed.map((c) => ({ ...c, createdAt: new Date(c.createdAt) }));
+  return parsed.flatMap((c): GeneratedComponent[] => {
+    if (!c || typeof c !== 'object') return [];
+    const { id, prompt, code, createdAt } = c as Record<string, unknown>;
+    if (typeof id !== 'string' || typeof prompt !== 'string' || typeof code !== 'string') return [];
+    if (typeof createdAt !== 'string') return [];
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) return [];
+    return [{ id, prompt, code, createdAt: date }];
+  });
 }
 
 export function useComponentGenerator(): UseComponentGeneratorReturn {
@@ -49,7 +59,7 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
         createdAt: new Date(),
       };
 
-      setComponents((prev) => [newComponent, ...prev]);
+      setComponents((prev) => [newComponent, ...prev].slice(0, MAX_COMPONENTS));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
