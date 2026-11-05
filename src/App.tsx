@@ -3,7 +3,8 @@ import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
 import { usePersistentState } from './hooks/usePersistentState';
-import { addToHistory } from './utils/promptHistory';
+import { useEncryptedState } from './hooks/useEncryptedState';
+import { addToHistory, reviveHistory } from './utils/promptHistory';
 import type { Provider } from './types';
 import './App.css';
 
@@ -12,11 +13,20 @@ const PROVIDER_CONFIG = {
   google: { label: 'Google', placeholder: 'AIza...' },
 } as const;
 
+function reviveProvider(parsed: unknown): Provider {
+  if (typeof parsed === 'string' && parsed in PROVIDER_CONFIG) return parsed as Provider;
+  throw new Error('invalid provider');
+}
+
 function App() {
-  const [apiKey, setApiKey] = usePersistentState('rcg:apiKey', '');
-  const [history, setHistory] = usePersistentState<string[]>('rcg:history', []);
+  const [apiKey, setApiKey] = useEncryptedState('rcg:apiKey');
+  const [history, setHistory] = usePersistentState<string[]>('rcg:history', [], reviveHistory);
   const [showKey, setShowKey] = useState(false);
-  const [provider, setProvider] = usePersistentState<Provider>('rcg:provider', 'google');
+  const [provider, setProvider] = usePersistentState<Provider>(
+    'rcg:provider',
+    'google',
+    reviveProvider,
+  );
   const [envKeys, setEnvKeys] = useState<Record<Provider, boolean>>({
     anthropic: false,
     google: false,
