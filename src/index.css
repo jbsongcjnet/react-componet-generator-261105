@@ -1,0 +1,43 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #1a1738;
+  --window: #f4f3fa;
+  --desk-a: #6c78d4;
+  --desk-b: #7884de;
+}
+
+body {
+  min-height: 100vh;
+  font-family:
+    Galmuri11, 'Malgun Gothic', 'Apple SD Gothic Neo', ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  background: conic-gradient(var(--desk-a) 25%, var(--desk-b) 0 50%, var(--desk-a) 0 75%, var(--desk-b) 0)
+    0 0 / 4px 4px;
+  color: var(--ink);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #ffd23f;
+  color: var(--ink);
+}
